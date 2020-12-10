@@ -10,6 +10,7 @@ import Points from './Point';
 import Login from '../Login/Login';
 
 import openModal from '../../actions/openModal';
+import loadScript from '../../utilityFunctions/loadScript';
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 const stripeUrl = process.env.REACT_APP_STRIPE_BASE_URL;
@@ -31,11 +32,11 @@ class SingleFullVenue extends Component {
     const singleVenueData = response.data;
 
     const pointsUrl = `${baseUrl}/points/get`;
-    const pointsAxiosReposponse = await axios(pointsUrl);
+    const pointsAxiosResponse = await axios(pointsUrl);
 
     const points = singleVenueData.points.split(',').map((point, i) => {
       return (
-        <Points key={i} pointDesc={pointsAxiosReposponse.data} point={point} />
+        <Points key={i} pointDesc={pointsAxiosResponse.data} point={point} />
       );
     });
     this.setState({
@@ -56,129 +57,132 @@ class SingleFullVenue extends Component {
 
   reserveNow = async (e) => {
     console.log('User wants to reserve...');
-    const startDate = moment(this.state.checkIn)
-    const endDate = moment(this.state.checkOut)
-
-    console.log('startDate :>> ', startDate);
-    console.log('endDate :>> ', endDate);
+    const startDate = moment(this.state.checkIn);
+    const endDate = moment(this.state.checkOut);
 
     const diffDays = endDate.diff(startDate, 'days');
-    console.log('diffDays :>> ', diffDays);
 
-    if (diffDays < 1){
+    if (diffDays < 1) {
       swal.fire({
         title: 'Invalid Checkout Date',
         text: 'The checkout date must be after checkin date',
         icon: 'error',
       });
-    } else if(isNaN(diffDays)){
+    } else if (isNaN(diffDays)) {
       swal.fire({
         title: 'Invalid Date',
         text: 'Please make sure input a valid date',
         icon: 'error',
       });
-
     } else {
-      // swal.fire({
-      //   title: 'Invalid Date',
-      //   text: 'Please make sure input a valid date',
-      //   icon: 'error',
-      // });
       const pricePerNight = this.state.singleVenue.pricePerNight;
       const totalPrice = pricePerNight * diffDays;
-      console.log('totalPrice :>> ', totalPrice);
-      await new Promise ((res, rej) => {
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = stripeUrl;
-        script.onload = () => {
-          res();
-        }
-        document.getElementsByTagName('head')[0].appendChild(script);
-      });
+
+      await loadScript(stripeUrl);
 
       const stripe = window.Stripe(stripePublicKey);
+      const stripeSessionUrl = `${baseUrl}/payment/create-session`;
+      const data = {
+        venueData: this.state.singleVenue,
+        totalPrice,
+        diffDays,
+        pricePerNight,
+        checkIn: this.state.checkIn,
+        checkOut: this.state.checkOut,
+        token: this.props.auth.token,
+        currency: 'USD',
+      };
+      const sessionVar = await axios.post(stripeSessionUrl, data);
 
+      stripe
+        .redirectToCheckout({
+          sessionId: sessionVar.data.id,
+        })
+        .then((result) => {
+          console.log('result :>> ', result);
+        });
     }
-
   };
 
   render() {
     console.log('this.state :>> ', this.state);
     const sv = this.state.singleVenue;
     return (
-      <div className="row single-venue">
-        <div className="col s12 center">
+      <div className='row single-venue'>
+        <div className='col s12 center'>
           <img src={sv.imageUrl} />
         </div>
-        <div className="col s8 location-details offset-s2">
-          <div className="col s8 left-details">
-            <div className="location">{sv.location}</div>
-            <div className="title">{sv.title}</div>
-            <div className="guests">{sv.guests}</div>
+        <div className='col s8 location-details offset-s2'>
+          <div className='col s8 left-details'>
+            <div className='location'>{sv.location}</div>
+            <div className='title'>{sv.title}</div>
+            <div className='guests'>{sv.guests}</div>
 
-            <div className="divider"></div>
+            <div className='divider'></div>
 
             {this.state.points}
 
-            <div className="details">{sv.details}</div>
-            <div className="amenities">{sv.amenities}</div>
+            <div className='details'>{sv.details}</div>
+            <div className='amenities'>{sv.amenities}</div>
           </div>
-          <div className="col s4 right-details">
-            <div className="price-per-day">
+          <div className='col s4 right-details'>
+            <div className='price-per-day'>
               ${sv.pricePerNight}
               <span> per day</span>
             </div>
-            <div className="rating">{sv.rating}</div>
-            <div className="col s6">
+            <div className='rating'>{sv.rating}</div>
+            <div className='col s6'>
               Check-In
               <input
-                type="date"
+                type='date'
                 value={this.state.checkIn}
                 onChange={this.changeCheckIn}
               />
             </div>
-            <div
-              className="col s6">
+            <div className='col s6'>
               Check-Out
               <input
-                type="date"
+                type='date'
                 value={this.state.checkOut}
                 onChange={this.changeCheckOut}
               />
             </div>
-            <div className="col s12">
+            <div className='col s12'>
               <select
-                className="browser-default"
+                className='browser-default'
                 value={this.state.numberOfGuests}
                 onChange={this.changeNumberOfGuests}
               >
-                <option value="1">1 Guest</option>
-                <option value="2">2 Guest</option>
-                <option value="3">3 Guest</option>
-                <option value="4">4 Guest</option>
-                <option value="5">5 Guest</option>
-                <option value="6">6 Guest</option>
-                <option value="7">7 Guest</option>
-                <option value="8">8 Guest</option>
-                <option value="9">9 Guest</option>
+                <option value='1'>1 Guest</option>
+                <option value='2'>2 Guest</option>
+                <option value='3'>3 Guest</option>
+                <option value='4'>4 Guest</option>
+                <option value='5'>5 Guest</option>
+                <option value='6'>6 Guest</option>
+                <option value='7'>7 Guest</option>
+                <option value='8'>8 Guest</option>
+                <option value='9'>9 Guest</option>
               </select>
             </div>
-            <div className="col s12 center">
-              {this.props.auth.token
-                ? (
-                  <button className="btn red accent-2" onClick={this.reserveNow}>
-                    Reserve
-                  </button>)
-                : (
-                  <div>You must <span
-                  className="text-link"
-                      onClick={() => {
-                        this.props.openModal('open', <Login />);
-                      }}
-                  >Log in </span>to reserve</div>
-                )
-              }
+            <div className='col s12 center'>
+              {this.props.auth.token ? (
+                <button className='btn red accent-2' onClick={this.reserveNow}>
+                  Reserve
+                </button>
+              ) : (
+                <div>
+                  You must{' '}
+                  <span
+                    className='text-link'
+                    onClick={() => {
+                      this.props.openModal('open', <Login />);
+                    }}
+                  >
+                    Log in{' '}
+                  </span>
+                  to reserve
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -187,10 +191,10 @@ class SingleFullVenue extends Component {
   }
 }
 
-function mapStateToProps(state){
+function mapStateToProps(state) {
   return {
     auth: state.auth,
-  }
+  };
 }
 
 function mapDispatchToProps(dispatch) {
