@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
+import moment from 'moment';
 import axios from 'axios';
 import Spinner from '../../utility/Spinner/Spinner';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -15,6 +16,7 @@ class PaymentSuccess extends Component {
   state = {
     reservationDetails: {},
     venueData: {},
+    userData: {},
     waiting: true,
   };
 
@@ -24,10 +26,11 @@ class PaymentSuccess extends Component {
     const data = { stripeToken, token };
     const successUrl = `${baseUrl}/payment/success`;
     const response = await axios.post(successUrl, data);
-    console.log('response :>> ', response.data);
+
     this.setState({
       reservationDetails: response.data.reservationDetails,
-      userData: response.data.user,
+      venueData: response.data.reservationDetails.venueData,
+      userData: response.data.userData,
       waiting: false,
     });
   }
@@ -37,7 +40,9 @@ class PaymentSuccess extends Component {
       return <Spinner />;
     }
     const rd = this.state.reservationDetails;
-    const vd = rd.venueData;
+    const vd = this.state.venueData;
+    const ud = this.state.userData;
+
     return (
       <div className='reservation-success row'>
         <h1 className='col m12 center'>Start Packing!</h1>
@@ -48,10 +53,10 @@ class PaymentSuccess extends Component {
               size='1x'
               color='#ED0000'
             />
-            Confirmed: NUMBER_OF_NIGHTS nights in VENUE_DATA_LOCATION
+            Confirmed: {rd.diffDays} nights in {vd.location}
             <div className='header-text'>
-              <div>Booked by: USER_EMAIL</div>
-              <div>TODAYS_DATE - USE MOMENT WITH .FORMAT()</div>
+              <div>Booked by: {ud.email}</div>
+              <div>{moment().format('MMMM Do YYYY')}</div>
             </div>
           </div>
           <div className='confirmed-detail row'>
@@ -63,14 +68,14 @@ class PaymentSuccess extends Component {
                 </div>
                 <div className='col m12 lower'>
                   <div className='left'>
-                    CHECK_IN_DATE - USE MOMENT WITH .FORMAT()
+                    {moment(rd.checkIn).format('MMMM Do YYYY')}
                   </div>
                   <div className='right'>
-                    CHECK OUT DATE - USE MOMENT WITH .FORMAT()
+                    {moment(rd.checkOut).format('MMMM Do YYYY')}
                   </div>
                 </div>
-                <div className='col m12 title-text'>VENUE_TITLE</div>
-                <div className='col m12 details'>VENUE_DETAILS</div>
+                <div className='col m12 title-text'>{vd.title}</div>
+                <div className='col m12 details'>{vd.details}</div>
               </div>
             </div>
 
@@ -80,9 +85,9 @@ class PaymentSuccess extends Component {
                   <div className='charges-text col m12'>Charges</div>
                   <div className='row col m12'>
                     <div className='left'>
-                      $PRICE_PER_NIGHT x NUMBER_OF_NIGHTS nights
+                      ${rd.pricePerNight} x {rd.diffDays} days
                     </div>
-                    <div className='right'>$TOTAL_PRICE</div>
+                    <div className='right'>${rd.totalPrice}</div>
                   </div>
                   <div className='row col m12'>
                     <div className='left'>Discount</div>
@@ -90,7 +95,7 @@ class PaymentSuccess extends Component {
                   </div>
                   <div className='row col m12 total'>
                     <div className='left'>TOTAL</div>
-                    <div className='right'>$TOTAL_PRICE</div>
+                    <div className='right'>${rd.totalPrice}</div>
                   </div>
                 </div>
                 <div className='col m12 row'>
@@ -98,7 +103,7 @@ class PaymentSuccess extends Component {
                   visit your <Link to='/account'>account page</Link>.
                 </div>
                 <div className='col m12 resv-image'>
-                  <img src='VENUE_IMAGE_URL' />
+                  <img src={vd.imageUrl} alt='' />
                 </div>
               </div>
             </div>
