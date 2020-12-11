@@ -21,35 +21,44 @@ class NavBar extends Component {
     const isHomePage = this.props.location.pathname === '/';
     const navColor = isHomePage ? 'transparent' : 'black';
     return (
-      <div className="container-fluid nav">
-        <div className="row">
+      <div className='container-fluid nav'>
+        <div className='row'>
           <nav className={navColor}>
-            <div className="nav-wrapper">
-              <Link to="/" className="left">
+            <div className='nav-wrapper'>
+              <Link to='/' className='left'>
                 airbnb
               </Link>
-              <ul className="right" id="nav-mobile">
+              <ul className='right' id='nav-mobile'>
                 <li>
-                  <Link to="/language">English (US)</Link>
+                  <Link to='/language'>English (US)</Link>
                 </li>
                 <li>
-                  <Link to="/currency">$ US</Link>
+                  <Link to='/currency'>$ US</Link>
                 </li>
                 <li>
-                  <Link to="/host">Become a host</Link>
+                  <Link to='/host'>Become a host</Link>
                 </li>
                 <li>
-                  <Link to="/help">Help</Link>
+                  <Link to='/help'>Help</Link>
                 </li>
                 {this.props.auth.email ? (
                   <>
-                    <li className="login-signup">Hello, {this.props.auth.email}</li>
-                    <li className="login-signup" onClick={() => {this.props.logoutAction()}}>Logout</li>
+                    <li className='login-signup'>
+                      <Link to='/account'>Hello, {this.props.auth.email}</Link>
+                    </li>
+                    <li
+                      className='login-signup'
+                      onClick={() => {
+                        this.props.logoutAction();
+                      }}
+                    >
+                      Logout
+                    </li>
                   </>
                 ) : (
                   <>
                     <li
-                      className="login-signup"
+                      className='login-signup'
                       onClick={() => {
                         this.props.openModal('open', <SignUp />);
                       }}
@@ -57,7 +66,7 @@ class NavBar extends Component {
                       Sign up
                     </li>
                     <li
-                      className="login-signup"
+                      className='login-signup'
                       onClick={() => {
                         this.props.openModal('open', <Login />);
                       }}
